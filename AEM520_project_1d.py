@@ -6,6 +6,9 @@ from findiff import FinDiff
 nx = 121
 ny = 41
 
+#nx = 241
+#ny = 81
+
 xl = 6
 yl = 2
 
@@ -47,9 +50,11 @@ def pressure_poisson(nt, p, dx, dy, b, o):
                          dx**2*dy**2/(2*(dx**2 + dy**2))*b[1:-1,1:-1])
         
         #p[:, 0] = 0         # p = 0 at x = 0
+        p[:, 0] = p[:, 1]
         p[0, :] = p[1, :]   # dp/dx = 0 at y = 0
         p[-1, :] = p[-2, :] # dp/dx =0 at y = 2
-        p[:, -1] = 0        # p = 0 at x = 6
+        #p[:, -1] = 0        # p = 0 at x = 6
+        p[:, -1] = p[:, -2]
 
         #print(p)
 
@@ -66,6 +71,10 @@ def pipe_flow(nt, u0, u, v, dt, dx, dy, p, rho, nu, o):
     b = np.zeros((ny, nx))
     ke = np.zeros((nt))
     max_p = np.zeros((nt))
+    mean_u = np.zeros((nt))
+    mean_v = np.zeros((nt))
+    conv_u = np.zeros((nt))
+    conv_v = np.zeros((nt))
     du_dx = FinDiff(1, dx, 1, acc=o)
     dv_dy = FinDiff(0, dy, 1, acc=o)
     du_dy = FinDiff(1, dy, 1, acc=o)
@@ -103,26 +112,32 @@ def pipe_flow(nt, u0, u, v, dt, dx, dy, p, rho, nu, o):
         v[-1, :] = 0
         v[:, 0]  = 0
 
+        mean_u[n] = np.mean(u)
+        conv_u[n] = mean_u[n] - mean_u[n-1]
+        mean_v[n] = np.mean(v)
+        conv_v[n] = mean_v[n] - mean_v[n-1]
         ke[n] = 0.5*(np.mean(np.array((u, v))))**2
         max_p[n] = np.max(p)
+        #if conv_u[n] and conv_v[n] < 1e-6:
+        #    break
     
-    return u, v, p, ke, max_p
+    return u, v, p, ke, max_p, conv_u, conv_v
 
 
 u = np.zeros((ny, nx))
 v = np.zeros((ny, nx))
 p = np.zeros((ny, nx))
-nt = 100
+nt = 300
 o = 8
-cfl = 0.09
-u0 = 20.
+cfl = 0.05
+u0 = 16.7
 dt = cfl*dx/u0
 #dt = 0.0003
 Re = rho*u0*xl/nu
 print('dt =', dt)
 print('Re =', Re)
 
-u, v, p, ke, max_p = pipe_flow(nt, u0, u, v, dt, dx, dy, p, rho, nu, o)
+u, v, p, ke, max_p, conv_u, conv_v = pipe_flow(nt, u0, u, v, dt, dx, dy, p, rho, nu, o)
 
 
 fig = plt.figure(figsize=(13,7), dpi=100)
@@ -155,4 +170,13 @@ plt.plot(np.linspace(0, 1, nt), max_p)
 plt.title('Flow Maximum Pressure vs. time')
 plt.xlabel('Timescale')
 plt.ylabel('p')
+plt.show()
+
+fig = plt.figure(figsize=(13, 7), dpi=100)
+plt.plot(np.linspace(0, 1, nt), conv_u, label='u')
+plt.plot(np.linspace(0, 1, nt), conv_v, label='v')
+plt.legend()
+plt.title('Velocity convergence')
+plt.xlabel('Timescale')
+plt.ylabel('velocites')
 plt.show()
