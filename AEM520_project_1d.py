@@ -112,12 +112,12 @@ def pipe_flow(nt, u0, u, v, dt, dx, dy, p, rho, nu, o):
 u = np.zeros((ny, nx))
 v = np.zeros((ny, nx))
 p = np.zeros((ny, nx))
-nt = 500
+nt = 100
 o = 8
-cfl = 0.2
-u0 = 6.
-#dt = cfl*dx/u0
-dt = 0.0003
+cfl = 0.09
+u0 = 20.
+dt = cfl*dx/u0
+#dt = 0.0003
 Re = rho*u0*xl/nu
 print('dt =', dt)
 print('Re =', Re)
