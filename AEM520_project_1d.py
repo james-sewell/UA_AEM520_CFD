@@ -45,9 +45,8 @@ def pressure_poisson(nt, p, dx, dy, b, o):
     for q in range(max_iter):
         pn = p.copy()
         d2p_dxdy = FinDiff((1, dx), (0, dy), acc=o)
-        #p[:, :] = d2p_dxdy(pn) - (dx**2*dy**2)/(2*(dx**2 + dy**2)*b[:, :])
-        p[1:-1, 1:-1] = (((pn[1:-1, 2:] + pn[1:-1, 0:-2])*dy**2 + (pn[2:, 1:-1] + pn[0:-2, 1:-1])*dx**2)/(2*(dx**2 + dy**2)) -
-                         dx**2*dy**2/(2*(dx**2 + dy**2))*b[1:-1,1:-1])
+        #p[:, :] = d2p_dxdy(pn) - dx**2*dy**2*b[:, :]/(2*(dx**2 + dy**2))
+        p[1:-1, 1:-1] = ((pn[1:-1, 2:] + pn[1:-1, 0:-2])*dy**2 + (pn[2:, 1:-1] + pn[0:-2, 1:-1])*dx**2)/(2*(dx**2 + dy**2)) - dx**2*dy**2*b[1:-1,1:-1]/(2*(dx**2 + dy**2))
         
         #p[:, 0] = 0         # p = 0 at x = 0
         p[:, 0] = p[:, 1]
@@ -129,7 +128,7 @@ v = np.zeros((ny, nx))
 p = np.zeros((ny, nx))
 nt = 300
 o = 8
-cfl = 0.05
+cfl = 0.04
 u0 = 16.7
 dt = cfl*dx/u0
 #dt = 0.0003
